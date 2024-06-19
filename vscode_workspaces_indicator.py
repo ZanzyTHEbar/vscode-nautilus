@@ -147,7 +147,7 @@ class VSCodeIndicator:
         # Refresh the menu to reflect the changes
         self.on_refresh(widget)
 
-    def _open_workspace(self, workspace_path):
+    def _open_workspace(self, widget, workspace_path):
         logging.debug(f"Opening workspace: {workspace_path}")
         self.launch_vscode([workspace_path])
 
