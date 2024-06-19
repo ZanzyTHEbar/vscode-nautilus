@@ -7,7 +7,7 @@ Provided are two extensions, a Nautilus extension and a GTK indicator extension.
 ## Install Extension
 
 ```bash
-wget -qO- https://github.com/ZanzyTHEbar/vscode-nautilus/blob/main/install.sh | bash
+wget -qO- https://raw.githubusercontent.com/ZanzyTHEbar/vscode-nautilus/main/install.sh | bash
 ```
 
 ## Uninstall Extension
