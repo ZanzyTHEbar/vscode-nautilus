@@ -56,46 +56,88 @@ mkdir -p ~/.local/share/bin/vscode-indicator
 rm -f $GTK_EXTENSION_PATH
 rm -f $NAUTILUS_EXTENSION_PATH
 
-# Download and install the nautilus extension
-echo "Downloading newest version..."
-wget --show-progress -q -O $NAUTILUS_EXTENSION_PATH https://raw.githubusercontent.com/harry-cpp/code-nautilus/master/code-nautilus.py
-
-# Ensure the Python script is executable
-if [ -f $NAUTILUS_EXTENSION_PATH ]; then
-    chmod +x $NAUTILUS_EXTENSION_PATH
-else
-    echo "Error: Python script $SCRIPT_PATH not found."
-    exit 1
-fi
-
-# Download and install the GTK extension
-wget --show-progress -q -O $GTK_EXTENSION_PATH https://raw.githubusercontent.com/harry-cpp/code-nautilus/master/vscode_workspaces_indicator.py
-
-# Ensure the Python script is executable
-if [ -f $GTK_EXTENSION_PATH ]; then
-    chmod +x $GTK_EXTENSION_PATH
-else
-    echo "Error: Python script $SCRIPT_PATH not found."
-    exit 1
-fi
-
-# Create the .desktop file
-cat > "$DESKTOP_FILE_PATH" << EOL
+# Function to create the .desktop file
+create_desktop_file() {
+    cat > "$DESKTOP_FILE_PATH" << EOL
 [Desktop Entry]
 Version=1.0
-Name=VS Code Indicator
-Exec=/usr/bin/env python3 $SCRIPT_PATH
-Icon=code
+Name=VSCode Indicator
+Exec=/usr/bin/env python3 $GTK_EXTENSION_PATH
+Icon=vscode
 Type=Application
+StartupNotify=false
+StartupWMClass=Code
 Categories=Utility;
 EOL
+    # Copy the .desktop file to autostart directory
+    mkdir -p "$HOME/.config/autostart"
+    cp "$DESKTOP_FILE_PATH" "$AUTOSTART_FILE_PATH"
+}
 
-# Copy the .desktop file to autostart directory
-mkdir -p "$HOME/.config/autostart"
-cp "$DESKTOP_FILE_PATH" "$AUTOSTART_FILE_PATH"
+# Function to download and install the Nautilus extension
+install_nautilus_extension() {
+    mkdir -p ~/.local/share/nautilus-python/extensions
+    wget --show-progress -q -O $NAUTILUS_EXTENSION_PATH https://raw.githubusercontent.com/ZanzyTHEbar/vscode-nautilus/main/vscode_nautilus_workspaces.py
 
-# Restart nautilus
-echo "Restarting nautilus..."
-nautilus -q
+    # Ensure the Python script is executable
+    if [ -f $NAUTILUS_EXTENSION_PATH ]; then
+        chmod +x $NAUTILUS_EXTENSION_PATH
+        echo "Nautilus extension installed successfully."
+    else
+        echo "Error: Nautilus extension script not found."
+        exit 1
+    fi
 
-echo "Setup complete. The VS Code Indicator will start automatically on the next login."
+    # Restart nautilus
+    echo "Restarting nautilus..."
+    nautilus -q
+}
+
+# Function to download and install the GTK extension
+install_gtk_extension() {
+    mkdir -p ~/.local/share/bin/vscode-indicator
+    wget --show-progress -q -O $GTK_EXTENSION_PATH https://raw.githubusercontent.com/ZanzyTHEbar/vscode-nautilus/main/vscode_workspaces_indicator.py
+
+    # Ensure the Python script is executable
+    if [ -f $GTK_EXTENSION_PATH ]; then
+        chmod +x $GTK_EXTENSION_PATH
+        echo "GTK extension installed successfully."
+    else
+        echo "Error: GTK extension script not found."
+        exit 1
+    fi
+
+    # Create the .desktop file for autostart
+    create_desktop_file
+}
+
+# Prompt the user for installation options
+echo "Which components would you like to install?"
+echo "1) Nautilus extension"
+echo "2) GTK extension"
+echo "3) Both"
+echo "4) None (exit)"
+read -p "Enter your choice [1-4]: " choice
+
+case $choice in
+    1)
+        install_nautilus_extension
+        ;;
+    2)
+        install_gtk_extension
+        ;;
+    3)
+        install_nautilus_extension
+        install_gtk_extension
+        ;;
+    4)
+        echo "Exiting without installing any components."
+        exit 0
+        ;;
+    *)
+        echo "Invalid choice. Exiting."
+        exit 1
+        ;;
+esac
+
+echo "Setup complete. The selected components have been installed and will take effect on the next login."
