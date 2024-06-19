@@ -117,7 +117,13 @@ echo "1) Nautilus extension"
 echo "2) GTK extension"
 echo "3) Both"
 echo "4) None (exit)"
-read -p "Enter your choice [1-4]: " choice
+read -t 5 -p "Enter your choice [1-4]: " choice
+
+# If no choice is made, default to exiting
+if [ -z "$choice" ]; then
+    echo "No choice made. Exiting."
+    exit 0
+fi
 
 case $choice in
     1)
