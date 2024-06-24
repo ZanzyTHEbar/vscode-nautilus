@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<schemalist>
+    <schema id="org.gnome.shell.extensions.vscode-workspaces-gnome"
+        path="/org/gnome/shell/extensions/vscode-workspaces-gnome/">
+        <key name="new-window" type="b">
+            <default>false</default>
+            <summary>New Window</summary>
+            <description>Open Code in New Window</description>
+        </key>
+        <key name="vscode-location" type="s">
+            <default>'code'</default>
+            <summary>VSCode Location</summary>
+            <description>Path to your VSCode Binary</description>
+        </key>
+        <key name="refresh-interval" type="i">
+            <default>300</default>
+            <summary>Refresh Interval</summary>
+            <description>Refresh Interval for the scanning workspaces, in Seconds</description>
+        </key>
+    </schema>
+</schemalist>
