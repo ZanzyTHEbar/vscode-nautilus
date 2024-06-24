@@ -1,3 +1,6 @@
 node_modules/
 .vscode/
 dist/
+*.log
+*.zip
+*.tar.gz
