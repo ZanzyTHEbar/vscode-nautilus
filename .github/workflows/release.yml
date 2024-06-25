@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -21,15 +23,21 @@ jobs:
       - name: Install pnpm
         run: npm install -g pnpm
 
+      - run: pnpm install -g semantic-release
+      - run: pnpm install -g conventional-changelog-conventionalcommits
+      - run: pnpm install -g @semantic-release/exec
+      - run: pnpm install -g @semantic-release/git
+      - run: pnpm install -g @semantic-release/github
+      - run: pnpm install -g @semantic-release/changelog
+      - run: pnpm install -g @semantic-release/release-notes-generator
+
       - name: Install project dependencies
         run: cd vscode-workspaces-gnome && pnpm install
 
       - name: Build project
         run: cd vscode-workspaces-gnome && make && make pack
 
-      - name: Upload release
-        uses: softprops/action-gh-release@v2.0.6
-        with:
-          files: ./vscode-workspaces-gnome/vscode-workspaces-gnome.zip
+      - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: semantic-release

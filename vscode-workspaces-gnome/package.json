@@ -9,7 +9,7 @@
     "url": "git+https://github.com/ZanzyTHEbar/vscode-nautilus.git"
   },
   "author": "ZanzyTHEbar <pyr0ndet0s97@gmail.com>",
-  "license": "LGPL-3.0-or-later",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/ZanzyTHEbar/vscode-nautilus/issues"
   },
