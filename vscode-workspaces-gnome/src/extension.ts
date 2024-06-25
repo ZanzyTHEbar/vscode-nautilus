@@ -300,6 +300,15 @@ export default class VSCodeWorkspacesExtension extends Extension {
             //    return { name: GLib.path_get_basename(file), path: file };
             //});
 
+            // check if the file exists and remove it from the list if it doesn't
+            this._workspaceFiles = this._workspaceFiles.filter(file => {
+                const exists = GLib.file_test(file, GLib.FileTest.EXISTS);
+                if (!exists) {
+                    log(`File does not exist: ${file}`);
+                }
+                return exists;
+            });
+
             const recentWorkspaces = this._workspaceFiles.map(file => {
                 return {
                     name: GLib.path_get_basename(file),
