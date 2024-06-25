@@ -27,19 +27,8 @@ jobs:
       - name: Build project
         run: cd vscode-workspaces-gnome && make && make pack
 
-      - name: Archive artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: build-artifact
-          path: ./vscode-workspaces-gnome/vscode-workspaces-gnome.zip
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: vscode-workspaces-gnome
-
       - name: Upload release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2.0.6
         with:
           files: ./vscode-workspaces-gnome/vscode-workspaces-gnome.zip
         env:
