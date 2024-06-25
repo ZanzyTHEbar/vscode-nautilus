@@ -4,16 +4,8 @@
   "description": "A VSCode/Codium Workspace management tool-set for GNOME",
   "type": "module",
   "private": true,
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/ZanzyTHEbar/vscode-nautilus.git"
-  },
   "author": "ZanzyTHEbar <pyr0ndet0s97@gmail.com>",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/ZanzyTHEbar/vscode-nautilus/issues"
-  },
-  "homepage": "https://github.com/ZanzyTHEbar/vscode-nautilus#readme",
   "sideEffects": false,
   "devDependencies": {
     "eslint": "^9.5.0",
