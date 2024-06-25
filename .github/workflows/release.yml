@@ -8,6 +8,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+       run:
+         working-directory: ./vscode-workspaces-gnome
 
     steps:
       - name: Checkout code
@@ -26,8 +29,8 @@ jobs:
         with:
           node-version: 20
           cache: 'pnpm'
+          cache-dependency-path: './vscode-workspaces-gnome/pnpm-lock.yaml'
 
-      
       - name: Get pnpm store directory
         shell: bash
         run: |
@@ -50,10 +53,10 @@ jobs:
       - run: pnpm install -g @semantic-release/release-notes-generator
 
       - name: Install project dependencies
-        run: cd vscode-workspaces-gnome && pnpm install
+        run: pnpm install
 
       - name: Build project
-        run: cd vscode-workspaces-gnome && make && make pack
+        run: make && make pack
 
       - name: Release
         env:
