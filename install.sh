@@ -37,8 +37,6 @@ else
 fi
 
 # Variables
-DESKTOP_FILE_PATH="$HOME/.local/share/applications/vscode_indicator.desktop"
-AUTOSTART_FILE_PATH="$HOME/.config/autostart/vscode_indicator.desktop"
 NAUTILUS_EXTENSION_WORKSPACE_PATH="$HOME/.local/share/nautilus-python/extensions/vscode_nautilus_workspaces.py"
 NAUTILUS_EXTENSION_OPEN_PATH="$HOME/.local/share/nautilus-python/extensions/vscode-nautilus-open.py"
 
@@ -69,10 +67,67 @@ install_nautilus_extensions() {
     nautilus -q
 }
 
+# URL to check
+URL_TO_CHECK=""
+# GitHub repository and file to download
+GITHUB_REPO="ZanzyTHEbar/vscode-nautilus"
+RELEASE_FILE="vscode-workspaces-gnome.zip"
+
+# Function to check if URL exists
+check_url() {
+    HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" "$1")
+    if [ "$HTTP_STATUS" -eq 200 ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Function to download file from GitHub releases
+download_from_github() {
+    LATEST_RELEASE=$(curl -s https://api.github.com/repos/$1/releases/latest | grep "tag_name" | awk '{print substr($2, 2, length($2)-3)}')
+    DOWNLOAD_URL="https://github.com/$1/releases/download/$LATEST_RELEASE/$2"
+    curl -L -o "/tmp/$2" "$DOWNLOAD_URL"
+}
+
+install_gnome_shell_extension() {
+    # Check if the GNOME Shell extension is installed
+    gnome_shell_extension_id="vscode-workspaces-gnome@prometheontechnologies.com"
+    gnome_shell_extension_installed=$(gnome-extensions list | grep $gnome_shell_extension_id)
+
+    if [ -z "$gnome_shell_extension_installed" ]; then
+        if check_url "$URL_TO_CHECK"; then
+            # open the URL in the default browser
+            xdg-open "$URL_TO_CHECK"
+
+            echo "Please download the GNOME Shell extension from the URL above and install it manually."
+
+        else
+            echo "GNOME Shell extensions website is not responding: $URL_TO_CHECK"
+            echo "Downloading $RELEASE_FILE from GitHub repo $GITHUB_REPO..."
+            download_from_github "$GITHUB_REPO" "$RELEASE_FILE"
+            if [ $? -eq 0 ]; then
+                echo "Downloaded $RELEASE_FILE successfully."
+            else
+                echo "Failed to download $RELEASE_FILE."
+            fi
+        fi
+
+        # Install the GNOME Shell extension
+        gnome-extensions install /tmp/vscode-workspaces-gnome.zip
+        gnome-extensions enable $gnome_shell_extension_id
+        echo "GNOME Shell extension installed successfully."
+    else
+        echo "GNOME Shell extension already installed."
+    fi
+}
+
 # Prompt the user for installation options
 echo "Which components would you like to install?"
 echo "1) Nautilus extensions"
-echo "2) None (exit)"
+echo "2) GNOME Shell extension"
+echo "3) Both"
+echo "4) None (exit)"
 
 read -p "Enter your choice [1-4]: " choice
 
@@ -87,6 +142,13 @@ case $choice in
     install_nautilus_extensions
     ;;
 2)
+    install_gnome_shell_extension
+    ;;
+3)
+    install_nautilus_extensions
+    install_gnome_shell_extension
+    ;;
+4)
     echo "Exiting without installing any components."
     exit 0
     ;;
@@ -96,4 +158,4 @@ case $choice in
     ;;
 esac
 
-echo "Setup complete. The selected components have been installed and will take effect on the next login."
+echo "Setup complete. The selected components have been installed and might need a re-login to take effect."
