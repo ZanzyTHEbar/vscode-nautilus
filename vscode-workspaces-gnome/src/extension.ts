@@ -11,16 +11,36 @@ import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
 import { FileChooserDialog } from './fileChooser.js';
 
+interface Workspace {
+    uri: string,
+    storeDir: Gio.File | null,
+}
+
+interface RecentWorkspace {
+    name: string;
+    path: string;
+    softRemove: () => void;
+    removeWorkspaceItem: () => void;
+}
+
 
 export default class VSCodeWorkspacesExtension extends Extension {
     gsettings?: Gio.Settings;
     _indicator?: PanelMenu.Button;
+
     _refreshInterval: number = 300;
     _refreshTimeout: any = null;
     _newWindow: boolean = false;
     _vscodeLocation: string = "";
+
     _recentWorkspacesPath: string = GLib.build_filenamev([GLib.get_home_dir(), '.config/Code/User/workspaceStorage']);
-    _workspaceFiles: string[] = [];
+    _workspaces: Set<Workspace> = new Set();
+    _recentWorkspaces: Set<RecentWorkspace> = new Set();
+
+    // TODO: Implement notifications
+    //_messageTray: MessageTray.MessageTray | null = null;
+    //_notificationSource: MessageTray.Source | null = null;
+    //_notification: MessageTray.Notification | null = null;
 
     enable() {
 
@@ -103,16 +123,16 @@ export default class VSCodeWorkspacesExtension extends Extension {
     }
 
     _loadRecentWorkspaces() {
-        const recentWorkspaces = this._getRecentWorkspaces();
+        this._getRecentWorkspaces();
 
-        if (recentWorkspaces.length === 0) {
+        if (this._recentWorkspaces.size === 0) {
             log('No recent workspaces found');
             return;
         }
 
         // Create a combo_box-like button for the recent workspaces
         const comboBoxButton: St.Button = new St.Button({
-            label: recentWorkspaces[0].name,
+            label: 'VSCode Workspaces',
             style_class: 'workspace-combo-button',
             reactive: true,
             can_focus: true,
@@ -128,7 +148,7 @@ export default class VSCodeWorkspacesExtension extends Extension {
         const comboBoxSubMenu = new PopupMenu.PopupSubMenuMenuItem('Recent Workspaces');
 
         const comboBoxMenu = comboBoxSubMenu.menu;
-        recentWorkspaces.forEach(workspace => {
+        this._recentWorkspaces.forEach(workspace => {
             const item = new PopupMenu.PopupMenuItem(workspace.name);
 
             const trashIcon = new St.Icon({
@@ -174,11 +194,7 @@ export default class VSCodeWorkspacesExtension extends Extension {
         (this._indicator?.menu as PopupMenu.PopupMenu).addMenuItem(comboBoxSubMenu);
     }
 
-    _iterateWorkspaceDir(dir: Gio.File, callback: (path: {
-        workspace: boolean,
-        dir: string,
-        file: string | null
-    }, file: Gio.File | null) => void) {
+    _iterateWorkspaceDir(dir: Gio.File, callback: (workspace: Workspace) => void) {
 
         try {
             // compare the file path with the child paths in the recent workspaces directory
@@ -187,56 +203,66 @@ export default class VSCodeWorkspacesExtension extends Extension {
             let info: Gio.FileInfo | null;
 
             while ((info = enumerator.next_file(null)) !== null) {
-                const _file = enumerator.get_child(info);
-                if (_file.query_file_type(Gio.FileQueryInfoFlags.NONE, null) !== Gio.FileType.DIRECTORY) {
-                    continue;
-                }
+                try {
+                    const workspaceStoreDir = enumerator.get_child(info);
 
-                const workspaceFile = _file.get_child('workspace.json');
-                if (!workspaceFile.query_exists(null)) {
-                    log(`No workspace.json found in ${_file.get_path()}`);
-                    continue;
-                }
+                    log(`Checking ${workspaceStoreDir.get_path()}`);
 
-                // parse the json file
-                const [ok, content] = workspaceFile.load_contents(null);
-                if (!ok) {
-                    log('Failed to load workspace.json');
-                    continue;
-                }
+                    const workspaceFile = Gio.File.new_for_path(GLib.build_filenamev([workspaceStoreDir.get_path()!, 'workspace.json']));
 
-                const json = JSON.parse(content.toString());
+                    if (!workspaceFile.query_exists(null)) {
+                        log(`No workspace.json found in ${workspaceStoreDir.get_path()}`);
+                        continue;
+                    }
 
-                // Check if the json file has a `folder` property or a `workspace` property - check if the previous item in `workspaceFiles` is the same as the current item
-                // we want to grab the contents either folder or workspace property and check if it's the same as the previous item in `workspaceFiles`
-                // if it is, we want to skip this item
-                // if it isn't, we want to add it to `workspaceFiles`
+                    // load the contents of the workspace.json file and parse it
+                    const [, contents] = workspaceFile.load_contents(null);
 
-                const item = (json.folder || json.workspace) as string | undefined;
-                if (!item) {
-                    log('No folder or workspace property found in workspace.json');
-                    continue;
-                }
+                    const decoder = new TextDecoder();
 
-                log(`Found workspace.json in ${_file.get_path()}: ${item}`);
+                    const json = JSON.parse(decoder.decode(contents));
 
-                // Check if the item is a file or a directory
-                const parsedPath = item.replace('file://', '');
-                const path: {
-                    workspace: boolean,
-                    dir: string,
-                    file: string | null
-                } = GLib.file_test(parsedPath, GLib.FileTest.IS_DIR) ? {
-                    dir: parsedPath,
-                    workspace: false,
-                    file: null
-                } : {
-                        dir: GLib.path_get_dirname(parsedPath),
-                        workspace: true,
-                        // get the file at the end of the uri path
-                        file: GLib.path_get_basename(parsedPath)
+                    // Check if the json file has a `folder` property or a `workspace` property - check if the previous item in `workspaceFiles` is the same as the current item
+                    // we want to grab the contents either folder or workspace property and check if it's the same as the previous item in `workspaceFiles`
+                    // if it is, we want to skip this item
+                    // if it isn't, we want to add it to `workspaceFiles`
+
+                    const workspaceURI = (json.folder || json.workspace) as string | undefined;
+                    if (!workspaceURI) {
+                        log('No folder or workspace property found in workspace.json');
+                        continue;
+                    }
+
+                    log(`Found workspace.json in ${workspaceStoreDir.get_path()} with ${workspaceURI}`);
+
+                    const newWorkspace = {
+                        uri: workspaceURI,
+                        storeDir: workspaceStoreDir
                     };
-                callback(path, _file);
+
+                    // Check if a workspace with the same uri exists
+                    const workspaceExists = Array.from(this._workspaces).some(workspace => {
+                        return workspace.uri === workspaceURI;
+                    });
+
+                    if (workspaceExists) {
+                        log(`Workspace already exists in recent workspaces: ${workspaceURI}`);
+                        continue;
+                    }
+
+                    // use a cache to avoid reprocessing the same directory/file
+                    if (this._workspaces.has(newWorkspace)) {
+                        log(`Workspace already exists: ${newWorkspace}`);
+                        continue;
+                    }
+
+
+                    this._workspaces.add(newWorkspace);
+                    callback(newWorkspace);
+                } catch (error) {
+                    logError((error as object), 'Failed to parse workspace.json');
+                    continue;
+                }
             }
 
             const enumCloseRes = enumerator.close(null);
@@ -251,170 +277,169 @@ export default class VSCodeWorkspacesExtension extends Extension {
 
     _getRecentWorkspaces() {
         try {
-            // walk the directory and get the most recent workspaces but creating a map of the workspace.json files within the subdirectories
             const dir = Gio.File.new_for_path(this._recentWorkspacesPath);
 
-            this._iterateWorkspaceDir(dir, (path, file) => {
+            this._iterateWorkspaceDir(dir, (workspace) => {
+                //! This callback checks if the workspace exists and if the parent directory is already in the list
 
-                if (!file) {
-                    throw new Error('No file found');
-                }
+                const pathToWorkspace = Gio.File.new_for_uri(workspace.uri);
 
-                const { workspace, dir: _dir, file: _fileName } = path;
-                const _path = workspace ? GLib.build_filenamev([_dir, _fileName!]) : _dir;
-
-                // check for duplicates
-                if (this._workspaceFiles.includes(_path)) {
-                    log(`Duplicate workspace found: ${_path}`);
+                // check if the file exists and remove it from the list if it doesn't
+                if (!pathToWorkspace.query_exists(null)) {
+                    log(`Workspace does not exist and will be removed from the list: ${pathToWorkspace.get_path()}`);
+                    this._workspaces.delete(workspace);
                     return;
                 }
 
-                // If the _path is a file, check if the parent directory is already in the list
-                if (workspace && this._workspaceFiles.includes(_dir)) {
-                    log(`Parent directory already in workspace files: ${_dir}`);
-                    // Remove the parent directory from the list
-                    this._workspaceFiles = this._workspaceFiles.filter(path => path !== _dir);
-                }
+                if (pathToWorkspace.query_file_type(Gio.FileQueryInfoFlags.NONE, null) !== Gio.FileType.DIRECTORY) {
+                    // check if the parent directory is already in the list
 
-                log(`Adding workspace: ${_path}`);
-                this._workspaceFiles.push(_path);
-            });
-            
-            // check if the file exists and remove it from the list if it doesn't
-            this._workspaceFiles = this._workspaceFiles.filter(file => {
-                const exists = GLib.file_test(file, GLib.FileTest.EXISTS);
-                if (!exists) {
-                    log(`File does not exist: ${file}`);
+                    // get the parent directory
+                    const parentDir = pathToWorkspace.get_parent();
+
+                    // construct a uri for the parent directory
+
+                    const parentURI = parentDir?.get_uri();
+
+                    const parentWorkspace = {
+                        uri: parentURI!,
+                        storeDir: workspace.storeDir
+                    };
+
+                    if (!this._workspaces.has(parentWorkspace)) {
+                        return;
+                    }
+
+                    const parentPath = parentDir?.get_path()!;
+                    log(`Parent directory already exists: ${parentPath}`);
+
+                    // remove the parent directory from the list
+
+                    log(`Removing parent directory: ${parentPath}`);
+
+                    this._workspaces.delete(parentWorkspace);
+
+                    return;
                 }
-                return exists;
             });
 
-            // sort the workspace files by modification time
-            this._workspaceFiles.sort((a, b) => {
-                const aInfo = Gio.File.new_for_path(a).query_info('standard::time', Gio.FileQueryInfoFlags.NONE, null);
-                const bInfo = Gio.File.new_for_path(b).query_info('standard::time', Gio.FileQueryInfoFlags.NONE, null);
+            // sort the workspace files by access time
+            /* this._workspaces = new Set(Array.from(this._workspaces).sort((a, b) => {
+
+                const aInfo = Gio.File.new_for_uri(a.uri).query_info('standard::*,unix::atime', Gio.FileQueryInfoFlags.NONE, null);
+                const bInfo = Gio.File.new_for_uri(b.uri).query_info('standard::*,unix::atime', Gio.FileQueryInfoFlags.NONE, null);
 
                 if (!aInfo || !bInfo) {
+                    log(`No file info found for ${a} or ${b}`);
                     return 0;
                 }
 
-                const aTime = aInfo.get_modification_time().tv_sec;
-                const bTime = bInfo.get_modification_time().tv_sec;
+                const aAccessTime = aInfo.get_attribute_uint64('unix::atime');
+                const bAccessTime = bInfo.get_attribute_uint64('unix::atime');
 
-                return aTime - bTime;
-            });
+                if (aAccessTime > bAccessTime) {
+                    return -1;
+                }
+
+                if (aAccessTime < bAccessTime) {
+                    return 1;
+                }
+
+                return 0;
+            })); */
+            // log the Set of workspaces, given that .values() returns an iterator
+            log(Array.from(this._workspaces).map(workspace => workspace.uri));
 
             // get the most recent workspaces
             //const recentWorkspaces = workspaceFiles.slice(-5).map(file => {
             //    return { name: GLib.path_get_basename(file), path: file };
             //});
 
+            this._recentWorkspaces = new Set(Array.from(this._workspaces).map(workspace => {
+                const workspaceName = GLib.path_get_basename(workspace.uri);
 
-            const recentWorkspaces = this._workspaceFiles.map(file => {
                 return {
-                    name: GLib.path_get_basename(file),
-                    path: file,
+                    name: workspaceName,
+                    path: workspace.uri,
                     softRemove: () => {
-                        // remove from the list of recent workspaces, but not the recent workspace directory
-                        log(`Removing workspace: ${file}`);
-                        this._workspaceFiles = this._workspaceFiles.filter(path => path !== file);
+                        log(`Moving Workspace to Trash: ${workspaceName}`);
+                        // Purge from the recent workspaces
+                        this._workspaces.delete(workspace);
+                        // Purge from the cache
+                        this._recentWorkspaces = new Set(Array.from(this._recentWorkspaces).filter(recentWorkspace => recentWorkspace.path !== workspace.uri));
 
-                        // now remove the workspace directory
-                        const dir = Gio.File.new_for_path(this._recentWorkspacesPath);
-                        this._iterateWorkspaceDir(dir, (path, _file) => {
-                            const { workspace, dir: _dir, file: _fileName } = path;
-                            const _path = workspace ? GLib.build_filenamev([_dir, _fileName!]) : _dir;
+                        // now remove the workspaceStore directory
+                        const trashRes = workspace.storeDir?.trash(null);
 
-                            // ensure that the path is the same as the file path
-                            if (file !== _path) {
-                                return;
-                            }
+                        if (!trashRes) {
+                            log(`Failed to move ${workspaceName} to trash`);
+                            return;
+                        }
 
-                            if (!_file) {
-                                log(`No file found for ${file}`);
-                                return;
-                            }
+                        log(`Workspace Trashed: ${workspaceName}`);
 
-                            const _filePath = _file.get_path()!;
-
-                            log(`Moving Workspace to Trash: ${_filePath}`);
-                            const workspaceDir = Gio.File.new_for_path(_filePath);
-                            const trashRes = workspaceDir.trash(null);
-
-                            if (!trashRes) {
-                                log(`Failed to move ${_filePath} to trash`);
-                                return;
-                            }
-
-                            log(`Workspace Trashed: ${_filePath}`);
-                            // Refresh the menu to reflect the changes
-                            this._createMenu();
-                        });
+                        // Refresh the menu to reflect the changes
+                        this._createMenu();
                     },
                     removeWorkspaceItem: () => {
-                        // remove from the list of recent workspaces, and remove the recent workspace directory, but not the file location of the workspace    
-
-                        // compare the file path with the child paths in the recent workspaces directory
-                        const dir = Gio.File.new_for_path(this._recentWorkspacesPath);
-
-                        this._iterateWorkspaceDir(dir, (path, _file) => {
-
-                            const { workspace, dir: _dir, file: _fileName } = path;
-                            const _path = workspace ? GLib.build_filenamev([_dir, _fileName!]) : _dir;
-
-                            // ensure that the path is the same as the file path
-                            if (file !== _path) {
-                                return;
-                            }
-
-                            if (!_file) {
-                                log(`No file found for ${file}`);
-                                return;
-                            }
-
-                            // Delete the containing directory for the workspace.json file
-                            log(`Removing workspace: ${_file.get_path()}`);
-                            _file.delete(null);
-                        });
-
+                        log(`Removing workspace: ${workspaceName}`);
+                        // Purge from the recent workspaces
+                        this._workspaces.delete(workspace);
+                        // Purge from the cache
+                        this._recentWorkspaces = new Set(Array.from(this._recentWorkspaces).filter(recentWorkspace => recentWorkspace.path !== workspace.uri));
+                        // now remove the workspace directory
+                        workspace.storeDir?.delete(null);
                         this._createMenu();
                     }
                 };
-            });
+            }))
 
-            log(`Recent Workspaces: ${JSON.stringify(recentWorkspaces)}`);
 
-            return recentWorkspaces;
+            // log the Set of recent workspaces, given that .values() returns an iterator
+            log(Array.from(this._recentWorkspaces).map(workspace => workspace.path));
 
         } catch (e) {
             logError((e as object), 'Failed to load recent workspaces');
-            return [];
         }
     }
 
     _launchVSCode(files: string[]): void {
+        // TODO: Support custom cmd args
+        // TODO: Support remote files and folders
+        // code --folder-uri vscode-remote://ssh-remote+user@host/path/to/folder
+
+
         log(`Launching VSCode with files: ${files.join(', ')}`);
 
         try {
             let safePaths = '';
             let args = '';
+            let isDir = false;
 
             files.forEach(file => {
                 safePaths += `"${file}" `;
                 log(`File Path: ${file}`);
 
-                if (GLib.file_test(file, GLib.FileTest.IS_DIR) && GLib.file_test(file, GLib.FileTest.EXISTS)) {
+                if (GLib.file_test(file, GLib.FileTest.IS_DIR)) {
                     log(`Found a directory: ${file}`);
-                    args = '--new-window';
+                    args = '--folder-uri';
+                    isDir = true;
+                } else {
+                    log(`Found a file: ${file}`);
+                    args = '--file-uri';
+                    isDir = false;
                 }
             });
 
-            const newWindow = this._newWindow ? '--new-window' : '';
+            let newWindow = this._newWindow ? '--new-window' : ''
 
-            if (args === '') {
-                args = newWindow ? '--new-window' : '';
+            if (isDir) {
+                newWindow = '--new-window';
+            } else {
+                newWindow = newWindow;
             }
-            const command = `${this._vscodeLocation} ${args} ${safePaths}`;
+
+            const command = `${this._vscodeLocation} ${newWindow} ${args} ${safePaths}`;
             log(`Command to execute: ${command}`);
             GLib.spawn_command_line_async(command);
         } catch (error) {
@@ -430,26 +455,28 @@ export default class VSCodeWorkspacesExtension extends Extension {
     _addWorkspaceItem() {
         try {
 
-            const fileChooserDialog = FileChooserDialog((filePath: string) => {
+            const fileChooserDialog = FileChooserDialog(async (filePath: string) => {
 
                 log(`Selected file: ${filePath}`);
 
+                // construct a uri for the filePath
+                const uri = Gio.File.new_for_path(filePath).get_uri();
+
                 // Check if the workspace is already in the list
-                const recentWorkspaces = this._getRecentWorkspaces();
-                const workspaceExists = recentWorkspaces.some(workspace => workspace.path === filePath);
+                const workspaceExists = Array.from(this._workspaces).some(workspace => {
+                    return workspace.uri === uri;
+                });
 
                 if (workspaceExists) {
                     log('Workspace already exists in recent workspaces');
                     return;
                 }
 
-                // Impl handle ~/ and environment variables in the path
-                const file = Gio.File.new_for_path(filePath);
-                filePath = file.get_path()!;
                 log(`Adding workspace: ${filePath}`);
 
                 // launch vscode with the workspace
-                this._launchVSCode([filePath]);
+                this._launchVSCode([uri]);
+
                 // Refresh the menu to reflect the changes
                 this._createMenu();
             });
@@ -464,11 +491,11 @@ export default class VSCodeWorkspacesExtension extends Extension {
     _clearRecentWorkspaces() {
         log('Clearing recent workspaces');
 
-        if (!GLib.file_test(this._recentWorkspacesPath, GLib.FileTest.EXISTS | GLib.FileTest.IS_DIR)) {
-            throw new Error('Recent workspaces directory does not exist');
-        }
-
         try {
+
+            if (!GLib.file_test(this._recentWorkspacesPath, GLib.FileTest.EXISTS | GLib.FileTest.IS_DIR)) {
+                throw new Error('Recent workspaces directory does not exist');
+            }
             // Create a backup of the directory before deleting it
             const backupPath = `${this._recentWorkspacesPath}.bak`;
             const backupDir = Gio.File.new_for_path(backupPath);
@@ -488,21 +515,40 @@ export default class VSCodeWorkspacesExtension extends Extension {
 
             log('Backup created successfully');
 
-
             // Delete the children of the directory
-            const enumerator = recentWorkspacesDir.enumerate_children('standard::*,unix::uid', Gio.FileQueryInfoFlags.NONE, null);
+            recentWorkspacesDir.enumerate_children_async('standard::*,unix::uid', Gio.FileQueryInfoFlags.NONE, GLib.PRIORITY_DEFAULT, null, (file, res) => {
 
-            let info: Gio.FileInfo | null;
+                const iter = recentWorkspacesDir.enumerate_children_finish(res);
 
-            while ((info = enumerator.next_file(null)) !== null) {
-                const file = enumerator.get_child(info);
-                if (file.query_file_type(Gio.FileQueryInfoFlags.NONE, null) !== Gio.FileType.DIRECTORY) {
-                    continue;
+                try {
+
+                    let info: Gio.FileInfo | null;
+
+                    while ((info = iter.next_file(null)) !== null) {
+                        const file = iter.get_child(info);
+                        if (file.query_file_type(Gio.FileQueryInfoFlags.NONE, null) !== Gio.FileType.DIRECTORY) {
+                            continue;
+                        }
+
+                        log(`Deleting ${file.get_path()}`);
+                        file.delete(null);
+                    }
+
+                    iter.close_async(GLib.PRIORITY_DEFAULT, null, (_iter, res) => {
+                        try {
+                            _iter?.close_finish(res);
+                        } catch (error) {
+                            logError((error as object), 'Failed to close iterator');
+                        }
+                    });
+                } catch (error) {
+                    logError((error as object), 'Failed to delete recent workspaces');
                 }
+            });
 
-                log(`Deleting ${file.get_path()}`);
-                file.delete(null);
-            }
+            // Purge the cache
+            this._workspaces.clear();
+            this._recentWorkspaces.clear();
 
             // Refresh the menu to reflect the changes
 
