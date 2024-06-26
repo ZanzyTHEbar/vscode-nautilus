@@ -61,3 +61,22 @@
   margin-top: 10px;
   width: 100%;
 }
+
+// This is a label for the entire window, a title
+.workspace-combo-button {
+  margin-top: 10px;
+  width: 100%;
+
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.2em;
+
+  transition: color 0.2s;
+
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+
+
+}
