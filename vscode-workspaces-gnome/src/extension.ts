@@ -11,6 +11,13 @@ import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
 import { FileChooserDialog } from './fileChooser.js';
 
+
+// TODO: Support remote files and folders and docker containers
+
+// TODO: Implement support for codium, insiders, snap, and flatpak installations
+
+// TODO: Implement support for custom cmd args
+
 interface Workspace {
     uri: string,
     storeDir: Gio.File | null,
