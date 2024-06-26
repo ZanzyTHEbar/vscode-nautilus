@@ -4,8 +4,8 @@ import tseslint from "typescript-eslint";
 import eslintPluginPrettier from "eslint-plugin-prettier/recommended";
 
 export default [
-    { languageOptions: { globals: globals.node } },
-    pluginJs.configs.recommended,
-    ...tseslint.configs.recommended,
-    eslintPluginPrettier,
+  { languageOptions: { globals: globals.node } },
+  pluginJs.configs.recommended,
+  ...tseslint.configs.recommended,
+  eslintPluginPrettier,
 ];
