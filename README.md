@@ -1,7 +1,7 @@
 # VSCode Nautilus Extension
 
 ![GitHub License](https://img.shields.io/github/license/ZanzyTHEbar/vscode-nautilus)
-[![Lint](https://github.com/ZanzyTHEbar/vscode-nautilus)/actions/workflows/eslint.yml/badge.svg)](https://github.com/ZanzyTHEbar/vscode-nautilus)/actions/workflows/eslint.yml)
+[![Lint](https://github.com/ZanzyTHEbar/vscode-nautilus/actions/workflows/eslint.yml/badge.svg)](https://github.com/ZanzyTHEbar/vscode-nautilus/actions/workflows/eslint.yml)
 ![GNOME Extensions download](https://img.shields.io/badge/dynamic/xml?url=https%3A%2F%2Fextensions.gnome.org%2Fextension%2F6976%2Fvscode-search-provider%2F&query=%2Fhtml%2Fbody%2Fdiv%5B2%5D%2Fdiv%2Fdiv%5B2%5D%2Fdiv%5B1%5D%2Fspan%5B3%5D&logo=gnome&label=GNOME%20extensions&cacheSeconds=86400)
 
 ## Description
