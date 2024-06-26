@@ -12,7 +12,9 @@
     "lint:fix": "eslint --fix . -c eslint.config.js",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
-    "prepare": "simple-git-hooks"
+    "prepare": "simple-git-hooks",
+    "update-deps": "pnpm up -Li",
+    "typecheck": "tsc --noEmit"
   },
   "simple-git-hooks": {
     "pre-commit": "npx lint-staged",
@@ -22,7 +24,7 @@
     "*": "eslint --fix"
   },
   "devDependencies": {
-    "eslint": "^9.5.0",
+    "eslint": "^8.56.0",
     "@eslint/js": "^9.5.0",
     "eslint-plugin-jsdoc": "^48.2.15",
     "typescript": "^5.5.2",
@@ -36,7 +38,7 @@
     "semantic-release": "^23.1.1",
     "simple-git-hooks": "^2.11.1",
     "tsm": "^2.3.0",
-    "typescript-eslint": "^7.8.0",
+    "typescript-eslint": "^7.14.1",
     "uvu": "^0.5.6"
   },
   "dependencies": {
