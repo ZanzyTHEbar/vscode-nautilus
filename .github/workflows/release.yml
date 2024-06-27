@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
        run:
-         working-directory: ./vscode-workspaces
+         working-directory: ./gnome-extension
 
     steps:
       - name: Checkout code
@@ -38,7 +38,7 @@ jobs:
         with:
           node-version: 20
           cache: 'pnpm'
-          cache-dependency-path: './vscode-workspaces/pnpm-lock.yaml'
+          cache-dependency-path: './gnome-extension/pnpm-lock.yaml'
 
       - name: Get pnpm store directory
         shell: bash
