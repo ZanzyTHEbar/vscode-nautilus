@@ -9,7 +9,6 @@ import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 // https://gjs.guide/extensions/topics/notifications.html
 //import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
-import { FileChooserDialog } from './fileChooser.js';
 
 // TODO: Support remote files and folders and docker containers
 
@@ -98,12 +97,6 @@ export default class VSCodeWorkspacesExtension extends Extension {
         log(`Refresh Interval: ${this._refreshInterval}`);
 
         this._loadRecentWorkspaces();
-
-        const itemAddWorkspace = new PopupMenu.PopupMenuItem('Add Workspace');
-        itemAddWorkspace.connect('activate', () => {
-            this._addWorkspaceItem();
-        });
-        (this._indicator.menu as PopupMenu.PopupMenu).addMenuItem(itemAddWorkspace);
 
         const itemSettings = new PopupMenu.PopupSubMenuMenuItem('Settings');
         const itemClearWorkspaces = new PopupMenu.PopupMenuItem('Clear Workspaces');
@@ -474,39 +467,6 @@ export default class VSCodeWorkspacesExtension extends Extension {
     _openWorkspace(workspacePath: string) {
         log(`Opening workspace: ${workspacePath}`);
         this._launchVSCode([workspacePath]);
-    }
-
-    _addWorkspaceItem() {
-        try {
-            const fileChooserDialog = FileChooserDialog(async (filePath: string) => {
-                log(`Selected file: ${filePath}`);
-
-                // construct a uri for the filePath
-                const uri = Gio.File.new_for_path(filePath).get_uri();
-
-                // Check if the workspace is already in the list
-                const workspaceExists = Array.from(this._workspaces).some(workspace => {
-                    return workspace.uri === uri;
-                });
-
-                if (workspaceExists) {
-                    log('Workspace already exists in recent workspaces');
-                    return;
-                }
-
-                log(`Adding workspace: ${filePath}`);
-
-                // launch vscode with the workspace
-                this._launchVSCode([uri]);
-
-                // Refresh the menu to reflect the changes
-                this._createMenu();
-            });
-
-            fileChooserDialog.open();
-        } catch (e) {
-            logError(e as object, 'Failed to load recent workspaces');
-        }
     }
 
     _clearRecentWorkspaces() {

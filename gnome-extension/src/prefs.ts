@@ -42,8 +42,6 @@ export default class GnomeRectanglePreferences extends ExtensionPreferences {
         });
         vscodeLocationGroup.add(vscodeLocationEntry);
 
-        window.add(page);
-
         // Group for Refresh Interval setting
         const refreshIntervalGroup = new Adw.PreferencesGroup({
             title: _('Refresh Interval'),
@@ -79,5 +77,9 @@ export default class GnomeRectanglePreferences extends ExtensionPreferences {
             'value',
             Gio.SettingsBindFlags.DEFAULT
         );
+
+        // Show the window
+        // Add the page to the window
+        window.add(page);
     }
 }

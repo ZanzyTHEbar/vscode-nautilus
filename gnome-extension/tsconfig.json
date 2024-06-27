@@ -1,6 +1,4 @@
 {
-    "version": "1.0.0",
-    "compileOnSave": true,
     "compilerOptions": {
         "strict": true,
         "lib": ["ES2022"],
@@ -12,11 +10,10 @@
         "rootDir": "src",
         "pretty": true,
         "removeComments": true,
-        "incremental": true,
         "sourceMap": false,
         "forceConsistentCasingInFileNames": true,
         "resolveJsonModule": true
     },
     "include": ["src/types/ambient.d.ts"],
-    "files": ["src/extension.ts", "src/prefs.ts", "src/fileChooser.ts"]
+    "files": ["src/extension.ts", "src/prefs.ts"]
 }
