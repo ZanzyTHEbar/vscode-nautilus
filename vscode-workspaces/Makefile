@@ -1,4 +1,4 @@
-NAME=vscode-workspaces-gnome
+NAME=vscode-workspaces
 DOMAIN=prometheontechnologies.com
 
 .PHONY: all pack install clean

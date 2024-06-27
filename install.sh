@@ -71,7 +71,7 @@ install_nautilus_extensions() {
 URL_TO_CHECK=""
 # GitHub repository and file to download
 GITHUB_REPO="ZanzyTHEbar/vscode-nautilus"
-RELEASE_FILE="vscode-workspaces-gnome.zip"
+RELEASE_FILE="vscode-workspaces.zip"
 
 # Function to check if URL exists
 check_url() {
@@ -92,7 +92,7 @@ download_from_github() {
 
 install_gnome_shell_extension() {
     # Check if the GNOME Shell extension is installed
-    gnome_shell_extension_id="vscode-workspaces-gnome@prometheontechnologies.com"
+    gnome_shell_extension_id="vscode-workspaces@prometheontechnologies.com"
     gnome_shell_extension_installed=$(gnome-extensions list | grep $gnome_shell_extension_id)
 
     if [ -z "$gnome_shell_extension_installed" ]; then
@@ -114,7 +114,7 @@ install_gnome_shell_extension() {
         fi
 
         # Install the GNOME Shell extension
-        gnome-extensions install /tmp/vscode-workspaces-gnome.zip
+        gnome-extensions install /tmp/vscode-workspaces.zip
         gnome-extensions enable $gnome_shell_extension_id
         echo "GNOME Shell extension installed successfully."
     else

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <schemalist>
-    <schema id="org.gnome.shell.extensions.vscode-workspaces-gnome"
-        path="/org/gnome/shell/extensions/vscode-workspaces-gnome/">
+    <schema id="org.gnome.shell.extensions.vscode-workspaces"
+        path="/org/gnome/shell/extensions/vscode-workspaces/">
         <key name="new-window" type="b">
             <default>false</default>
             <summary>New Window</summary>

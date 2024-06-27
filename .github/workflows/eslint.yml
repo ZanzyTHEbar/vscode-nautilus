@@ -21,7 +21,7 @@ jobs:
   eslint:
     defaults:
       run:
-        working-directory: ./vscode-workspaces-gnome
+        working-directory: ./vscode-workspaces
 
     name: Run eslint scanning
     runs-on: ubuntu-latest

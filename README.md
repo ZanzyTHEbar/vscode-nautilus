@@ -44,14 +44,14 @@ bash <(wget -qO- https://raw.githubusercontent.com/ZanzyTHEbar/vscode-nautilus/m
 To uninstall a GNOME Shell extension, you can use the GNOME Tweaks application or the `gnome-extensions` command.
 
 ```bash
-gnome-extensions disable vscode-workspaces-gnome@prometheontechnologies.com
-gnome-extensions uninstall vscode-workspaces-gnome@prometheontechnologies.com
+gnome-extensions disable vscode-workspaces@prometheontechnologies.com
+gnome-extensions uninstall vscode-workspaces@prometheontechnologies.com
 ```
 
 You can also remove the directory manually.
 
 ```bash
-rm -rf ~/.local/share/gnome-shell/extensions/vscode-workspaces-gnome@prometheontechnologies.com
+rm -rf ~/.local/share/gnome-shell/extensions/vscode-workspaces@prometheontechnologies.com
 ```
 
 ## Uninstall Nautilus Extensions
@@ -89,7 +89,7 @@ Navigate to your desired directory and execute following commands in the termina
 
 ```bash
 git clone https://github.com/ZanzyTHEbar/vscode-nautilus.git
-cd vscode-nautilus/vscode-workspaces-gnome
+cd vscode-nautilus/vscode-workspaces
 
 make && make pack && make install
 ```

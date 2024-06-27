@@ -1,0 +1,80 @@
+.trash-icon {
+    color: inherit;
+    cursor: pointer;
+    margin-left: 5px;
+    margin-right: 5px;
+    font-size: 1.2em;
+
+    transition: color 0.2s;
+
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+
+    display: inline-block;
+    vertical-align: middle;
+
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    font-family: 'Material Icons';
+    font-weight: normal;
+    font-style: normal;
+
+    font-size: 16px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-rendering: optimizeLegibility;
+    text-transform: none;
+    white-space: nowrap;
+
+    word-wrap: normal;
+    direction: ltr;
+    text-align: left;
+    text-indent: 0;
+    text-shadow: none;
+    text-decoration: none;
+
+    height: 16px;
+    width: 16px;
+}
+
+.trash-icon-hover {
+    color: red;
+    transition: color 0.2s;
+}
+
+.file-chooser-dialog {
+    width: 400px;
+    height: 300px;
+}
+
+.file-chooser-content {
+    padding: 10px;
+}
+
+.file-path-entry {
+    margin-top: 10px;
+    width: 100%;
+}
+
+// This is a label for the entire window, a title
+.workspace-combo-button {
+    margin-top: 10px;
+    width: 100%;
+
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.2em;
+
+    transition: color 0.2s;
+
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
