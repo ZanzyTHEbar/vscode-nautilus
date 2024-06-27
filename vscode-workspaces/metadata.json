@@ -1,5 +1,5 @@
 {
-    "name": "VSCode Workspaces GNOME",
+    "name": "VSCode Workspaces",
     "description": "A VSCode/Codium Workspace management tool-set for GNOME",
     "uuid": "vscode-workspaces@prometheontechnologies.com",
     "url": "https://github.com/ZanzyTHEbar/vscode-nautilus",
