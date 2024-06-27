@@ -37,3 +37,6 @@ help:
 	@echo "  install: Install the extension"
 	@echo "  clean:  Remove build artifacts"
 	@echo "  help:   Show this help message"
+
+%:
+	@:
