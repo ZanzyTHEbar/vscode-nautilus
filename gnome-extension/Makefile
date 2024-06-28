@@ -1,4 +1,4 @@
-NAME=vscode-workspaces-gnome
+NAME=vscode-workspaces
 DOMAIN=prometheontechnologies.com
 
 .PHONY: all pack install clean
@@ -37,3 +37,6 @@ help:
 	@echo "  install: Install the extension"
 	@echo "  clean:  Remove build artifacts"
 	@echo "  help:   Show this help message"
+
+%:
+	@:

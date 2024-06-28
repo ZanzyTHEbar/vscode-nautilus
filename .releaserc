@@ -164,7 +164,7 @@
                 "addReleases": "bottom",
                 "assets": [
                     {
-                        "path": "./**/*.zip"
+                        "path": "./*.zip"
                     }
                 ]
             }
@@ -173,8 +173,8 @@
             "@semantic-release/git",
             {
                 "assets": [
-                    "LICENSE*",
-                    "CHANGELOG.md"
+                    "../LICENSE*",
+                    "../CHANGELOG.md"
                 ],
                 "message": "chore(${nextRelease.type}): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
             }
