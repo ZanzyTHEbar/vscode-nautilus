@@ -31,16 +31,32 @@ export default class GnomeRectanglePreferences extends ExtensionPreferences {
         newWindowGroup.add(newWindowSwitch);
 
         // Group for VSCode Location
-        const vscodeLocationGroup = new Adw.PreferencesGroup({
-            title: _('VSCode Location'),
-            description: _('Configure the path to your VSCode binary'),
+        const vscodeGroup = new Adw.PreferencesGroup({
+            title: _('VSCode Settings'),
+            description: _('Configure various settings for interacting with VSCode'),
         });
-        page.add(vscodeLocationGroup);
 
-        const vscodeLocationEntry = new Gtk.Entry({
-            placeholder_text: _('Path to VSCode binary'),
+        const vscodeLocation = new Adw.EntryRow({
+            title: _('VSCode Location'),
+            showApplyButton: true,
+            inputPurpose: Gtk.InputPurpose.TERMINAL,
+            inputHints: Gtk.InputHints.WORD_COMPLETION,
         });
-        vscodeLocationGroup.add(vscodeLocationEntry);
+
+        const debug = new Adw.SwitchRow({
+            title: _('Debug'),
+            subtitle: _('Whether to enable debug logging'),
+        });
+
+        const preferWorkspaceFile = new Adw.SwitchRow({
+            title: _('Prefer Workspace File'),
+            subtitle: _('Whether to prefer the workspace file over the workspace directory if a workspace file is present'),
+        });
+
+        vscodeGroup.add(vscodeLocation);
+        vscodeGroup.add(preferWorkspaceFile);
+        vscodeGroup.add(debug);
+        page.add(vscodeGroup);
 
         // Group for Refresh Interval setting
         const refreshIntervalGroup = new Adw.PreferencesGroup({
@@ -67,10 +83,25 @@ export default class GnomeRectanglePreferences extends ExtensionPreferences {
         );
         this._settings!.bind(
             'vscode-location',
-            vscodeLocationEntry,
+            vscodeLocation,
             'text',
             Gio.SettingsBindFlags.DEFAULT
         );
+
+        this._settings!.bind(
+            'debug',
+            debug,
+            'active',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        this._settings!.bind(
+            'prefer-workspace-file',
+            preferWorkspaceFile,
+            'active',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
         this._settings!.bind(
             'refresh-interval',
             refreshGroupEntry,

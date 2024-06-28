@@ -36,6 +36,8 @@ export default class VSCodeWorkspacesExtension extends Extension {
     _refreshTimeout: any = null;
     _newWindow: boolean = false;
     _vscodeLocation: string = '';
+    _preferCodeWorkspaceFile: boolean = false;
+    _debug: boolean = false;
 
     _recentWorkspacesPath: string = GLib.build_filenamev([
         GLib.get_home_dir(),
@@ -67,9 +69,26 @@ export default class VSCodeWorkspacesExtension extends Extension {
 
         this.gsettings = this.getSettings();
 
+        this.gsettings.connect('changed', () => {
+            this._setSettings();
+            this._startRefresh();
+        });
+    }
+
+    _setSettings() {
         this._newWindow = this.gsettings!.get_value('new-window').deepUnpack() ?? false;
         this._vscodeLocation = this.gsettings!.get_value('vscode-location').deepUnpack() ?? 'code';
         this._refreshInterval = this.gsettings!.get_value('refresh-interval').deepUnpack() ?? 300;
+        this._preferCodeWorkspaceFile = this.gsettings!.get_value('prefer-workspace-file').deepUnpack() ?? false;
+        this._debug = this.gsettings!.get_value('debug').deepUnpack() ?? false;
+
+        this._log(`VSCode Workspaces Extension enabled`);
+        this._log(`New Window: ${this._newWindow}`);
+        this._log(`VSCode Location: ${this._vscodeLocation}`);
+        this._log(`Refresh Interval: ${this._refreshInterval}`);
+        this._log(`Prefer Code Workspace File: ${this._preferCodeWorkspaceFile}`);
+        this._log(`Debug: ${this._debug}`);
+
     }
 
     disable() {
@@ -83,18 +102,13 @@ export default class VSCodeWorkspacesExtension extends Extension {
         }
         this.gsettings = undefined;
 
-        log(`VSCode Workspaces Extension disabled`);
+        this._log(`VSCode Workspaces Extension disabled`);
     }
 
     _createMenu() {
         if (!this._indicator) return;
 
         (this._indicator.menu as PopupMenu.PopupMenu).removeAll();
-
-        log(`VSCode Workspaces Extension enabled`);
-        log(`New Window: ${this._newWindow}`);
-        log(`VSCode Location: ${this._vscodeLocation}`);
-        log(`Refresh Interval: ${this._refreshInterval}`);
 
         this._loadRecentWorkspaces();
 
@@ -125,7 +139,7 @@ export default class VSCodeWorkspacesExtension extends Extension {
         this._getRecentWorkspaces();
 
         if (this._recentWorkspaces.size === 0) {
-            log('No recent workspaces found');
+            this._log('No recent workspaces found');
             return;
         }
 
@@ -210,14 +224,14 @@ export default class VSCodeWorkspacesExtension extends Extension {
                 try {
                     const workspaceStoreDir = enumerator.get_child(info);
 
-                    log(`Checking ${workspaceStoreDir.get_path()}`);
+                    this._log(`Checking ${workspaceStoreDir.get_path()}`);
 
                     const workspaceFile = Gio.File.new_for_path(
                         GLib.build_filenamev([workspaceStoreDir.get_path()!, 'workspace.json'])
                     );
 
                     if (!workspaceFile.query_exists(null)) {
-                        log(`No workspace.json found in ${workspaceStoreDir.get_path()}`);
+                        this._log(`No workspace.json found in ${workspaceStoreDir.get_path()}`);
                         continue;
                     }
 
@@ -235,11 +249,11 @@ export default class VSCodeWorkspacesExtension extends Extension {
 
                     const workspaceURI = (json.folder || json.workspace) as string | undefined;
                     if (!workspaceURI) {
-                        log('No folder or workspace property found in workspace.json');
+                        this._log('No folder or workspace property found in workspace.json');
                         continue;
                     }
 
-                    log(
+                    this._log(
                         `Found workspace.json in ${workspaceStoreDir.get_path()} with ${workspaceURI}`
                     );
 
@@ -248,24 +262,24 @@ export default class VSCodeWorkspacesExtension extends Extension {
                         storeDir: workspaceStoreDir,
                     };
 
+                    callback(newWorkspace);
                     // Check if a workspace with the same uri exists
                     const workspaceExists = Array.from(this._workspaces).some(workspace => {
                         return workspace.uri === workspaceURI;
                     });
 
                     if (workspaceExists) {
-                        log(`Workspace already exists in recent workspaces: ${workspaceURI}`);
+                        this._log(`Workspace already exists in recent workspaces: ${workspaceURI}`);
                         continue;
                     }
 
                     // use a cache to avoid reprocessing the same directory/file
                     if (this._workspaces.has(newWorkspace)) {
-                        log(`Workspace already exists: ${newWorkspace}`);
+                        this._log(`Workspace already exists: ${newWorkspace}`);
                         continue;
                     }
 
                     this._workspaces.add(newWorkspace);
-                    callback(newWorkspace);
                 } catch (error) {
                     logError(error as object, 'Failed to parse workspace.json');
                     continue;
@@ -282,21 +296,37 @@ export default class VSCodeWorkspacesExtension extends Extension {
         }
     }
 
+    _log(message: any): void {
+
+        if (!this._debug) {
+            return;
+        }
+
+        log(`[${this.metadata.name}]: ${message}`);
+    }
+
     _getRecentWorkspaces() {
         try {
             const dir = Gio.File.new_for_path(this._recentWorkspacesPath);
 
             this._iterateWorkspaceDir(dir, workspace => {
-                //! This callback checks if the workspace exists and if the parent directory is already in the list
+                //! This callback checks if the workspace exists and if it is a directory, it checks if there is a `.code-workspace` file in the directory
 
                 const pathToWorkspace = Gio.File.new_for_uri(workspace.uri);
 
                 // check if the file exists and remove it from the list if it doesn't
                 if (!pathToWorkspace.query_exists(null)) {
-                    log(
+                    this._log(
                         `Workspace does not exist and will be removed from the list: ${pathToWorkspace.get_path()}`
                     );
                     this._workspaces.delete(workspace);
+                    return;
+                }
+
+                // we will only execute the below if the setting is active
+
+                if (!this._preferCodeWorkspaceFile) {
+                    this._log(`Not preferring code-workspace file - continuing: ${workspace.uri}`);
                     return;
                 }
 
@@ -304,78 +334,121 @@ export default class VSCodeWorkspacesExtension extends Extension {
                     pathToWorkspace.query_file_type(Gio.FileQueryInfoFlags.NONE, null) !==
                     Gio.FileType.DIRECTORY
                 ) {
-                    // check if the parent directory is already in the list
-
-                    // get the parent directory
-                    const parentDir = pathToWorkspace.get_parent();
-
-                    // construct a uri for the parent directory
-
-                    const parentURI = parentDir?.get_uri();
-
-                    const parentWorkspace = {
-                        uri: parentURI!,
-                        storeDir: workspace.storeDir,
-                    };
-
-                    if (!this._workspaces.has(parentWorkspace)) {
-                        return;
-                    }
-
-                    const parentPath = parentDir?.get_path();
-                    log(`Parent directory already exists: ${parentPath}`);
-
-                    // remove the parent directory from the list
-
-                    log(`Removing parent directory: ${parentPath}`);
-
-                    this._workspaces.delete(parentWorkspace);
-
+                    this._log(`Not a directory - continuing: ${pathToWorkspace.get_path()}`);
                     return;
                 }
+
+                // Check if there is a file a `.code-workspace` extension in the directory
+
+                // look for children, and find one with the `.code-workspace` extension
+                const enumerator = pathToWorkspace.enumerate_children(
+                    'standard::*,unix::uid',
+                    Gio.FileQueryInfoFlags.NONE,
+                    null
+                );
+
+                let info: Gio.FileInfo | null;
+
+                let workspaceFilePath: string | null = null;
+
+                while ((info = enumerator.next_file(null)) !== null) {
+                    const file = enumerator.get_child(info);
+
+                    if (file.get_basename()?.endsWith('.code-workspace')) {
+                        workspaceFilePath = file.get_path();
+                        break;
+                    }
+                }
+
+                const enumCloseRes = enumerator.close(null);
+
+                if (!enumCloseRes) {
+                    throw new Error('Failed to close enumerator');
+                }
+
+                this._log(`Checking for ${workspaceFilePath}`);
+
+                if (!workspaceFilePath) {
+                    this._log(`Failed to get workspace file path`);
+                    return;
+                }
+
+                const workspaceFile = Gio.File.new_for_path(workspaceFilePath);
+                if (!workspaceFile.query_exists(null)) {
+                    this._log(`No .code-workspace file found in ${workspace.uri} - opening directory`);
+                    return;
+                }
+
+                this._log(`Found .code-workspace file in ${workspace.uri}`);
+
+                // Check if a workspace with the same uri as the workspaceFile exists
+                const workspaceFileExists = Array.from(this._workspaces).some(_workspace => {
+                    return _workspace.uri === workspaceFile.get_uri();
+                });
+
+                if (!workspaceFileExists) {
+                    return;
+                }
+
+                this._log(`Workspace already exists in recent workspaces -  Removing directory workspace in favour of code-workspace file: ${workspaceFile.get_uri()}`);
+
+                this._workspaces.delete(workspace);
+
+                // remove the directory workspace from the cache
+                const recentWorkspaceObject = Array.from(this._recentWorkspaces).find(
+                    recentWorkspace => recentWorkspace.path === workspace.uri
+                );
+
+                recentWorkspaceObject?.softRemove();
+
+                this._recentWorkspaces = new Set(
+                    Array.from(this._recentWorkspaces).filter(
+                        recentWorkspace => recentWorkspace.path !== workspace.uri
+                    )
+                );
             });
 
             // sort the workspace files by access time
             /* this._workspaces = new Set(Array.from(this._workspaces).sort((a, b) => {
-
+    
                 const aInfo = Gio.File.new_for_uri(a.uri).query_info('standard::*,unix::atime', Gio.FileQueryInfoFlags.NONE, null);
                 const bInfo = Gio.File.new_for_uri(b.uri).query_info('standard::*,unix::atime', Gio.FileQueryInfoFlags.NONE, null);
-
+    
                 if (!aInfo || !bInfo) {
-                    log(`No file info found for ${a} or ${b}`);
+                    this._log(`No file info found for ${a} or ${b}`);
                     return 0;
                 }
-
+    
                 const aAccessTime = aInfo.get_attribute_uint64('unix::atime');
                 const bAccessTime = bInfo.get_attribute_uint64('unix::atime');
-
+    
                 if (aAccessTime > bAccessTime) {
                     return -1;
                 }
-
+    
                 if (aAccessTime < bAccessTime) {
                     return 1;
                 }
-
+    
                 return 0;
             })); */
-            // log the Set of workspaces, given that .values() returns an iterator
-            log(Array.from(this._workspaces).map(workspace => workspace.uri));
-
-            // get the most recent workspaces
-            //const recentWorkspaces = workspaceFiles.slice(-5).map(file => {
-            //    return { name: GLib.path_get_basename(file), path: file };
-            //});
+            // this._log the Set of workspaces, given that .values() returns an iterator
+            this._log(`[Workspace Cache]: ${Array.from(this._workspaces).map(workspace => workspace.uri)}`);
 
             this._recentWorkspaces = new Set(
                 Array.from(this._workspaces).map(workspace => {
-                    const workspaceName = GLib.path_get_basename(workspace.uri);
+                    let workspaceName = GLib.path_get_basename(workspace.uri);
+
+                    // if there is`.code-workspace` included in the workspaceName, remove it
+                    if (workspaceName.endsWith('.code-workspace')) {
+                        workspaceName = workspaceName.replace('.code-workspace', '');
+                    }
 
                     return {
                         name: workspaceName,
                         path: workspace.uri,
                         softRemove: () => {
-                            log(`Moving Workspace to Trash: ${workspaceName}`);
+                            this._log(`Moving Workspace to Trash: ${workspaceName}`);
                             // Purge from the recent workspaces
                             this._workspaces.delete(workspace);
                             // Purge from the cache
@@ -389,17 +462,17 @@ export default class VSCodeWorkspacesExtension extends Extension {
                             const trashRes = workspace.storeDir?.trash(null);
 
                             if (!trashRes) {
-                                log(`Failed to move ${workspaceName} to trash`);
+                                this._log(`Failed to move ${workspaceName} to trash`);
                                 return;
                             }
 
-                            log(`Workspace Trashed: ${workspaceName}`);
+                            this._log(`Workspace Trashed: ${workspaceName}`);
 
                             // Refresh the menu to reflect the changes
                             this._createMenu();
                         },
                         removeWorkspaceItem: () => {
-                            log(`Removing workspace: ${workspaceName}`);
+                            this._log(`Removing workspace: ${workspaceName}`);
                             // Purge from the recent workspaces
                             this._workspaces.delete(workspace);
                             // Purge from the cache
@@ -416,8 +489,8 @@ export default class VSCodeWorkspacesExtension extends Extension {
                 })
             );
 
-            // log the Set of recent workspaces, given that .values() returns an iterator
-            log(Array.from(this._recentWorkspaces).map(workspace => workspace.path));
+            // this._log the Set of recent workspaces, given that .values() returns an iterator
+            this._log(`[Recent Workspaces]: ${Array.from(this._recentWorkspaces).map(workspace => workspace.path)}`);
         } catch (e) {
             logError(e as object, 'Failed to load recent workspaces');
         }
@@ -428,7 +501,7 @@ export default class VSCodeWorkspacesExtension extends Extension {
         // TODO: Support remote files and folders
         // code --folder-uri vscode-remote://ssh-remote+user@host/path/to/folder
 
-        log(`Launching VSCode with files: ${files.join(', ')}`);
+        this._log(`Launching VSCode with files: ${files.join(', ')}`);
 
         try {
             let safePaths = '';
@@ -437,14 +510,14 @@ export default class VSCodeWorkspacesExtension extends Extension {
 
             files.forEach(file => {
                 safePaths += `"${file}" `;
-                log(`File Path: ${file}`);
+                this._log(`File Path: ${file}`);
 
                 if (GLib.file_test(file, GLib.FileTest.IS_DIR)) {
-                    log(`Found a directory: ${file}`);
+                    this._log(`Found a directory: ${file}`);
                     args = '--folder-uri';
                     isDir = true;
                 } else {
-                    log(`Found a file: ${file}`);
+                    this._log(`Found a file: ${file}`);
                     args = '--file-uri';
                     isDir = false;
                 }
@@ -457,7 +530,7 @@ export default class VSCodeWorkspacesExtension extends Extension {
             }
 
             const command = `${this._vscodeLocation} ${newWindow} ${args} ${safePaths}`;
-            log(`Command to execute: ${command}`);
+            this._log(`Command to execute: ${command}`);
             GLib.spawn_command_line_async(command);
         } catch (error) {
             logError(error as object, 'Failed to launch VSCode');
@@ -465,12 +538,12 @@ export default class VSCodeWorkspacesExtension extends Extension {
     }
 
     _openWorkspace(workspacePath: string) {
-        log(`Opening workspace: ${workspacePath}`);
+        this._log(`Opening workspace: ${workspacePath}`);
         this._launchVSCode([workspacePath]);
     }
 
     _clearRecentWorkspaces() {
-        log('Clearing recent workspaces');
+        this._log('Clearing recent workspaces');
 
         try {
             if (
@@ -490,7 +563,7 @@ export default class VSCodeWorkspacesExtension extends Extension {
                 throw new Error('Backup directory already exists');
             }
 
-            log(`Creating backup of ${this._recentWorkspacesPath} to ${backupPath}`);
+            this._log(`Creating backup of ${this._recentWorkspacesPath} to ${backupPath}`);
 
             const res = recentWorkspacesDir.copy(
                 backupDir,
@@ -503,7 +576,7 @@ export default class VSCodeWorkspacesExtension extends Extension {
                 throw new Error('Failed to create backup');
             }
 
-            log('Backup created successfully');
+            this._log('Backup created successfully');
 
             // Delete the children of the directory
             recentWorkspacesDir.enumerate_children_async(
@@ -526,7 +599,7 @@ export default class VSCodeWorkspacesExtension extends Extension {
                                 continue;
                             }
 
-                            log(`Deleting ${file.get_path()}`);
+                            this._log(`Deleting ${file.get_path()}`);
                             file.delete(null);
                         }
 

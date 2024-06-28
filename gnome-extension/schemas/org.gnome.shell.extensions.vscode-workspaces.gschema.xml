@@ -2,15 +2,25 @@
 <schemalist>
     <schema id="org.gnome.shell.extensions.vscode-workspaces"
         path="/org/gnome/shell/extensions/vscode-workspaces/">
+        <key name="vscode-location" type="s">
+            <default>'code'</default>
+            <summary>VSCode Location</summary>
+            <description>Path to your VSCode Binary</description>
+        </key>
         <key name="new-window" type="b">
             <default>false</default>
             <summary>New Window</summary>
             <description>Open Code in New Window</description>
         </key>
-        <key name="vscode-location" type="s">
-            <default>'code'</default>
-            <summary>VSCode Location</summary>
-            <description>Path to your VSCode Binary</description>
+        <key name="prefer-workspace-file" type="b">
+            <default>false</default>
+            <summary>Prefer Workspace File</summary>
+            <description>Whether to prefer the workspace file over the workspace directory if a  workspace file is present</description>
+        </key>
+        <key name="debug" type="b">
+            <default>false</default>
+            <summary>Debug</summary>
+            <description>Whether to enable debug logging</description>
         </key>
         <key name="refresh-interval" type="i">
             <default>300</default>
