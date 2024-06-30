@@ -52,6 +52,8 @@ export default class VSCodeWorkspacesExtension extends Extension {
     //_notification: MessageTray.Notification | null = null;
 
     enable() {
+        this.gsettings = this.getSettings();
+
         this._indicator = new PanelMenu.Button(0.0, this.metadata.name, false);
 
         const icon = new St.Icon({
@@ -61,13 +63,12 @@ export default class VSCodeWorkspacesExtension extends Extension {
 
         this._indicator.add_child(icon);
 
-        this._createMenu();
 
         Main.panel.addToStatusArea(this.metadata.uuid, this._indicator);
 
         this._startRefresh();
-
-        this.gsettings = this.getSettings();
+        this._setSettings();
+        this._createMenu();
 
         this.gsettings.connect('changed', () => {
             this._setSettings();
@@ -88,7 +89,6 @@ export default class VSCodeWorkspacesExtension extends Extension {
         this._log(`Refresh Interval: ${this._refreshInterval}`);
         this._log(`Prefer Code Workspace File: ${this._preferCodeWorkspaceFile}`);
         this._log(`Debug: ${this._debug}`);
-
     }
 
     disable() {
@@ -409,29 +409,29 @@ export default class VSCodeWorkspacesExtension extends Extension {
             });
 
             // sort the workspace files by access time
-            /* this._workspaces = new Set(Array.from(this._workspaces).sort((a, b) => {
-    
+            this._workspaces = new Set(Array.from(this._workspaces).sort((a, b) => {
+
                 const aInfo = Gio.File.new_for_uri(a.uri).query_info('standard::*,unix::atime', Gio.FileQueryInfoFlags.NONE, null);
                 const bInfo = Gio.File.new_for_uri(b.uri).query_info('standard::*,unix::atime', Gio.FileQueryInfoFlags.NONE, null);
-    
+
                 if (!aInfo || !bInfo) {
                     this._log(`No file info found for ${a} or ${b}`);
                     return 0;
                 }
-    
+
                 const aAccessTime = aInfo.get_attribute_uint64('unix::atime');
                 const bAccessTime = bInfo.get_attribute_uint64('unix::atime');
-    
+
                 if (aAccessTime > bAccessTime) {
                     return -1;
                 }
-    
+
                 if (aAccessTime < bAccessTime) {
                     return 1;
                 }
-    
+
                 return 0;
-            })); */
+            }));
             // this._log the Set of workspaces, given that .values() returns an iterator
             this._log(`[Workspace Cache]: ${Array.from(this._workspaces).map(workspace => workspace.uri)}`);
 
