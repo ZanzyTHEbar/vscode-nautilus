@@ -89,7 +89,7 @@ Navigate to your desired directory and execute following commands in the termina
 
 ```bash
 git clone https://github.com/ZanzyTHEbar/vscode-nautilus.git
-cd vscode-nautilus/vscode-workspaces
+cd vscode-nautilus/gnome-extension
 
 make && make pack && make install
 ```

@@ -1,6 +1,6 @@
 {
     "name": "VSCode Workspaces",
-    "description": "A VSCode/Codium Workspace management tool-set for GNOME",
+    "description": "A VSCode/Codium Workspace management tool-set for GNOME - This extension is not affiliated, funded, or in any way associated with Microsoft and vscode software.",
     "uuid": "vscode-workspaces@prometheontechnologies.com",
     "url": "https://github.com/ZanzyTHEbar/vscode-nautilus",
     "settings-schema": "org.gnome.shell.extensions.vscode-workspaces",
