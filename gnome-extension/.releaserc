@@ -146,12 +146,6 @@
             }
         ],
         [
-            "@semantic-release/github",
-            {
-                "addReleases": "bottom"
-            }
-        ],
-        [
             "@semantic-release/exec",
             {
                 "prepareCmd": "echo Prepare ${nextRelease.version}",

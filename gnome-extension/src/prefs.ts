@@ -6,11 +6,9 @@ import {
     gettext as _,
 } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-export default class GnomeRectanglePreferences extends ExtensionPreferences {
-    _settings?: Gio.Settings;
-
+export default class VSCodeWorkspacesPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window: Adw.PreferencesWindow) {
-        this._settings = this.getSettings();
+        const _settings = this.getSettings();
 
         const page = new Adw.PreferencesPage({
             title: _('General'),
@@ -75,34 +73,34 @@ export default class GnomeRectanglePreferences extends ExtensionPreferences {
         refreshIntervalGroup.add(refreshGroupEntry);
 
         // Bind settings
-        this._settings!.bind(
+        _settings.bind(
             'new-window',
             newWindowSwitch,
             'active',
             Gio.SettingsBindFlags.DEFAULT
         );
-        this._settings!.bind(
+        _settings.bind(
             'vscode-location',
             vscodeLocation,
             'text',
             Gio.SettingsBindFlags.DEFAULT
         );
 
-        this._settings!.bind(
+        _settings.bind(
             'debug',
             debug,
             'active',
             Gio.SettingsBindFlags.DEFAULT
         );
 
-        this._settings!.bind(
+        _settings.bind(
             'prefer-workspace-file',
             preferWorkspaceFile,
             'active',
             Gio.SettingsBindFlags.DEFAULT
         );
 
-        this._settings!.bind(
+        _settings.bind(
             'refresh-interval',
             refreshGroupEntry,
             'value',
@@ -112,5 +110,9 @@ export default class GnomeRectanglePreferences extends ExtensionPreferences {
         // Show the window
         // Add the page to the window
         window.add(page);
+
+        window.connect('close-request', () => {
+            _settings.apply();
+        });
     }
 }
