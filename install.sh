@@ -49,8 +49,8 @@ rm -f $NAUTILUS_EXTENSION_OPEN_PATH
 # Function to download and install the Nautilus extension
 install_nautilus_extensions() {
     mkdir -p ~/.local/share/nautilus-python/extensions
-    wget --show-progress -q -O $NAUTILUS_EXTENSION_WORKSPACE_PATH https://raw.githubusercontent.com/ZanzyTHEbar/vscode-nautilus/main/vscode_nautilus_workspaces.py
-    wget --show-progress -q -O $NAUTILUS_EXTENSION_OPEN_PATH https://raw.githubusercontent.com/ZanzyTHEbar/vscode-nautilus/main/vscode-nautilus-open.py
+    wget --show-progress -q -O $NAUTILUS_EXTENSION_WORKSPACE_PATH https://raw.githubusercontent.com/ZanzyTHEbar/vscode-workspaces/main/vscode_nautilus_workspaces.py
+    wget --show-progress -q -O $NAUTILUS_EXTENSION_OPEN_PATH https://raw.githubusercontent.com/ZanzyTHEbar/vscode-workspaces/main/vscode-nautilus-open.py
 
     # Ensure the Python scripts are executable
     if [ -f $NAUTILUS_EXTENSION_WORKSPACE_PATH ] && [ -f $NAUTILUS_EXTENSION_OPEN_PATH ]; then
@@ -70,7 +70,7 @@ install_nautilus_extensions() {
 # URL to check
 URL_TO_CHECK=""
 # GitHub repository and file to download
-GITHUB_REPO="ZanzyTHEbar/vscode-nautilus"
+GITHUB_REPO="ZanzyTHEbar/vscode-workspaces"
 RELEASE_FILE="vscode-workspaces.zip"
 
 # Function to check if URL exists
