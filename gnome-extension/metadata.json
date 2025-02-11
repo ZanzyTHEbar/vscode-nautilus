@@ -4,7 +4,7 @@
     "uuid": "vscode-workspaces@prometheontechnologies.com",
     "url": "https://github.com/ZanzyTHEbar/vscode-nautilus",
     "settings-schema": "org.gnome.shell.extensions.vscode-workspaces",
-    "shell-version": ["45", "46"],
+    "shell-version": ["45", "46", "47"],
     "donations": {
         "github": "ZanzyTHEbar"
     }
