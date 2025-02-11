@@ -9,7 +9,7 @@ node_modules: package.json
 	pnpm install
 
 dist/extension.js dist/prefs.js: node_modules
-	tsc
+	pnpm tsc
 
 schemas/gschemas.compiled: schemas/org.gnome.shell.extensions.$(NAME).gschema.xml
 	glib-compile-schemas schemas

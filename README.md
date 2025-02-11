@@ -1,4 +1,4 @@
-# VSCode Nautilus Extension
+# VSCode Workspaces Extension
 
 ![GitHub License](https://img.shields.io/github/license/ZanzyTHEbar/vscode-workspaces)
 <!-- [![Lint](https://github.com/ZanzyTHEbar/vscode-workspaces/actions/workflows/eslint.yml/badge.svg)](https://github.com/ZanzyTHEbar/vscode-workspaces/actions/workflows/eslint.yml) -->
