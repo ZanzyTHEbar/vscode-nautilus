@@ -165,6 +165,12 @@ export default class VSCodeWorkspacesExtension extends Extension {
         (this._indicator.menu as PopupMenu.PopupMenu).addMenuItem(itemQuit);
     }
 
+    _get_name(workspace: RecentWorkspace) {
+        let path = decodeURIComponent(workspace.path);
+        path = path.replace(`file://`, '').replace(GLib.get_home_dir(), '~');
+        return path;
+    }
+
     _loadRecentWorkspaces() {
         this._getRecentWorkspaces();
 
@@ -192,7 +198,7 @@ export default class VSCodeWorkspacesExtension extends Extension {
         // Create the PopupMenu for the ComboBox items
 
         this._recentWorkspaces?.forEach(workspace => {
-            const item = new PopupMenu.PopupMenuItem(workspace.name);
+            const item = new PopupMenu.PopupMenuItem(this._get_name(workspace));
 
             const trashIcon = new St.Icon({
                 icon_name: 'user-trash-symbolic',
