@@ -72,6 +72,87 @@ export default class VSCodeWorkspacesPreferences extends ExtensionPreferences {
         });
         refreshIntervalGroup.add(refreshGroupEntry);
 
+        // Add Git Cache Settings group
+        const gitCacheGroup = new Adw.PreferencesGroup({
+            title: _('Git Cache Settings'),
+            description: _('Configure git information caching behavior')
+        });
+        page.add(gitCacheGroup);
+
+        const gitCacheTTLEntry = new Gtk.SpinButton({
+            adjustment: new Gtk.Adjustment({
+                lower: 60,    // Minimum 1 minute
+                upper: 3600,  // Maximum 1 hour
+                step_increment: 60
+            }),
+        });
+
+        const gitCacheTTLRow = new Adw.ActionRow({
+            title: _('Git Cache TTL'),
+            subtitle: _('Time in seconds to cache git repository information'),
+            activatable_widget: gitCacheTTLEntry
+        });
+        gitCacheTTLRow.add_suffix(gitCacheTTLEntry);
+        gitCacheGroup.add(gitCacheTTLRow);
+
+        // Add Performance Settings group
+        const performanceGroup = new Adw.PreferencesGroup({
+            title: _('Performance Settings'),
+            description: _('Configure performance and resource usage')
+        });
+        page.add(performanceGroup);
+
+        // Performance Mode dropdown
+        const performanceModeRow = new Adw.ComboRow({
+            title: _('Performance Mode'),
+            subtitle: _('Adjust performance settings based on your system capabilities'),
+            model: new Gtk.StringList({
+                strings: ['balanced', 'performance', 'memory-saver']
+            })
+        });
+        performanceGroup.add(performanceModeRow);
+
+        // Max Batch Size
+        const maxBatchSizeEntry = new Gtk.SpinButton({
+            adjustment: new Gtk.Adjustment({
+                lower: 2,
+                upper: 20,
+                step_increment: 1
+            }),
+        });
+
+        const maxBatchSizeRow = new Adw.ActionRow({
+            title: _('Maximum Batch Size'),
+            subtitle: _('Maximum number of workspaces to process simultaneously'),
+            activatable_widget: maxBatchSizeEntry
+        });
+        maxBatchSizeRow.add_suffix(maxBatchSizeEntry);
+        performanceGroup.add(maxBatchSizeRow);
+
+        // Processing Delay
+        const processingDelayEntry = new Gtk.SpinButton({
+            adjustment: new Gtk.Adjustment({
+                lower: 50,
+                upper: 1000,
+                step_increment: 50
+            }),
+        });
+
+        const processingDelayRow = new Adw.ActionRow({
+            title: _('Processing Delay'),
+            subtitle: _('Delay in milliseconds between processing batches'),
+            activatable_widget: processingDelayEntry
+        });
+        processingDelayRow.add_suffix(processingDelayEntry);
+        performanceGroup.add(processingDelayRow);
+
+        // Enable Diagnostics switch
+        const diagnosticsRow = new Adw.SwitchRow({
+            title: _('Enable Diagnostics'),
+            subtitle: _('Collect diagnostic information for troubleshooting')
+        });
+        performanceGroup.add(diagnosticsRow);
+
         // Bind settings
         _settings.bind(
             'new-window',
@@ -104,6 +185,41 @@ export default class VSCodeWorkspacesPreferences extends ExtensionPreferences {
             'refresh-interval',
             refreshGroupEntry,
             'value',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        _settings.bind(
+            'git-cache-ttl',
+            gitCacheTTLEntry,
+            'value',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        _settings.bind(
+            'performance-mode',
+            performanceModeRow,
+            'selected',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        _settings.bind(
+            'max-batch-size',
+            maxBatchSizeEntry,
+            'value',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        _settings.bind(
+            'processing-delay',
+            processingDelayEntry,
+            'value',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        _settings.bind(
+            'enable-diagnostics',
+            diagnosticsRow,
+            'active',
             Gio.SettingsBindFlags.DEFAULT
         );
 

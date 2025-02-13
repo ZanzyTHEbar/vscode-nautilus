@@ -15,7 +15,8 @@
         <key name="prefer-workspace-file" type="b">
             <default>false</default>
             <summary>Prefer Workspace File</summary>
-            <description>Whether to prefer the workspace file over the workspace directory if a  workspace file is present</description>
+            <description>Whether to prefer the workspace file over the workspace directory if a
+                workspace file is present</description>
         </key>
         <key name="debug" type="b">
             <default>false</default>
@@ -26,6 +27,76 @@
             <default>300</default>
             <summary>Refresh Interval</summary>
             <description>Refresh Interval for the scanning workspaces, in Seconds</description>
+        </key>
+        <key name="git-cache-ttl" type="i">
+            <default>300</default>
+            <summary>Git Cache TTL</summary>
+            <description>Time in seconds to cache git repository information</description>
+        </key>
+        <key name="performance-mode" type="s">
+            <default>'balanced'</default>
+            <summary>Performance Mode</summary>
+            <description>Adjust performance settings (balanced, performance, memory-saver)</description>
+        </key>
+        <key name="max-batch-size" type="i">
+            <default>10</default>
+            <summary>Maximum Batch Size</summary>
+            <description>Maximum number of workspaces to process simultaneously</description>
+        </key>
+        <key name="processing-delay" type="i">
+            <default>100</default>
+            <summary>Processing Delay</summary>
+            <description>Delay in milliseconds between processing batches</description>
+        </key>
+        <key name="enable-diagnostics" type="b">
+            <default>false</default>
+            <summary>Enable Diagnostics</summary>
+            <description>Collect diagnostic information for troubleshooting</description>
+        </key>
+        <key name="default-tags" type="as">
+            <default>['work', 'personal', 'archived']</default>
+            <summary>Default Tags</summary>
+            <description>List of default tags available when tagging workspaces</description>
+        </key>
+        <key name="group-expanded-by-default" type="b">
+            <default>true</default>
+            <summary>Groups Expanded by Default</summary>
+            <description>Whether workspace groups should be expanded by default</description>
+        </key>
+        <key name="show-workspace-stats" type="b">
+            <default>true</default>
+            <summary>Show Workspace Statistics</summary>
+            <description>Show workspace usage statistics in the menu</description>
+        </key>
+        <key name="menu-sections-order" type="as">
+            <default>['favorites', 'groups', 'recent']</default>
+            <summary>Menu Sections Order</summary>
+            <description>Order of sections in the workspace menu</description>
+        </key>
+        <key name="collect-workspace-stats" type="b">
+            <default>true</default>
+            <summary>Collect Workspace Statistics</summary>
+            <description>Collect statistics about workspace usage</description>
+        </key>
+        <key name="workspace-stats-retention" type="i">
+            <default>90</default>
+            <summary>Workspace Statistics Retention</summary>
+            <description>Number of days to keep workspace statistics</description>
+        </key>
+        <key name="show-group-icons" type="b">
+            <default>true</default>
+            <summary>Show Group Icons</summary>
+            <description>Show icons for workspace groups</description>
+        </key>
+        <key name="show-tags-in-menu" type="b">
+            <default>true</default>
+            <summary>Show Tags in Menu</summary>
+            <description>Show workspace tags directly in the menu items</description>
+        </key>
+        <key name="max-groups-visible" type="i">
+            <default>5</default>
+            <summary>Maximum Visible Groups</summary>
+            <description>Maximum number of groups to show before scrolling</description>
         </key>
     </schema>
 </schemalist>

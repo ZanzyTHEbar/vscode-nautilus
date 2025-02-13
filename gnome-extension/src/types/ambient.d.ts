@@ -9,3 +9,7 @@ import '@girs/gnome-shell/st';
 import '@girs/gnome-shell/ui/main';
 import '@girs/gnome-shell/ui/panelMenu';
 import '@girs/gnome-shell/ui/popupMenu';
+
+declare const global: {
+    get_pointer: () => [number, number, number];
+};
